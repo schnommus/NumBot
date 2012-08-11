@@ -76,12 +76,12 @@ class NumBot(irc.IRCClient):
 
         if "!numbergame" in msg.lower():
             self.isActive = True
-            self.currentLeader = ('',1000)
+            self.currentLeader = ('',0)
             self.numbs = PickNumbers()
             self.msg( channel, "The numbers are: " + str(self.numbs))
             self.target = PickTarget(self.numbs)
             self.msg( channel, "The target is: " + str(self.target[1]) + ", You have 45 seconds...")
-            reactor.callLater(45, self.privmsg, '', channel, "!endgame")
+            self.end = reactor.callLater(45, self.privmsg, '', channel, "!endgame")
 
         if "!endgame" in msg.lower() and self.isActive:
             self.isActive = False
@@ -102,7 +102,7 @@ class NumBot(irc.IRCClient):
                 self.msg( channel, "No-one has scored any points..." )
             c = self.leaderBoard.items()
             c.sort()
-            for user, score in c:
+            for user, score in c[::-1]:
                 self.msg( channel, user + ": " + str(score) )
 
         if "!clearlb" in msg.lower():
@@ -137,11 +137,16 @@ class NumBot(irc.IRCClient):
             if iv:
                 try:
                     result = eval(sa, {'__builtins__': None}, {})
-                    points = int(math.fabs(result-self.target[1]))
-                    self.msg( channel, u + " - Answered " + str(result) + ", " + str(points) + " points out." )
-                    if self.currentLeader[1] > points:
+                    points = 10-int(math.fabs(result-self.target[1]))
+                    if points < 0:
+                        points = 0
+                    self.msg( channel, u + " - Answered " + str(result) + ", worth " + str(points) + " points." )
+                    if self.currentLeader[1] < points:
                         self.currentLeader = (u, points)
                         self.msg( channel, u + " is new leader on " + str(points) + " points!" )
+                        if points == 10:
+                            self.end.cancel()
+                            self.privmsg( '', channel, "!endgame" )
                 except:
                     self.msg( channel, u + " - Syntax error / Invalid expression" )
             else:

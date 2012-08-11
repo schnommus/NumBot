@@ -1,3 +1,2 @@
-Seb Holzapfel 2012 - Schnommus
+Written by Seb Holzapfel (2012) aka Schnommus
 Plays a numbers game over IRC
-Skeleton from MomBot code
